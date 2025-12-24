@@ -1,0 +1,117 @@
+project_id  = "your-prd-project-id"
+region      = "asia-northeast1"
+environment = "main"
+
+# Common environment variables for all services
+common_env_vars = {
+  TZ = "Asia/Tokyo"
+}
+
+# L1: Global secrets (shared by all environments and services)
+global_secret_names = [
+  "basic-auth-user",
+  "basic-auth-password",
+  "isr-secret",
+  "session-secret-token",
+  "allowed-emails",
+]
+
+services = {
+  "realworld" = {
+    github_org  = "motora-dev"
+    github_repo = "angular-nestjs-realworld-example-app"
+
+    # L2: Service-common secrets (shared across environments, service-specific)
+    service_secret_names = [
+      "database-url",
+    ]
+
+    # L3: Environment-specific secrets (environment + service prefix)
+    env_secret_names = [
+      "cors-origins",
+      "cookie-domain",
+    ]
+
+    common_env_vars = {
+      NODE_ENV = "production"
+    }
+
+    cloud_run_services = {
+      "server" = {
+        allow_unauthenticated = true
+        memory_limit          = "1Gi"
+        health_check_path     = "/api/health"
+        env_vars              = {}
+        secret_env_vars = {
+          DATABASE_URL  = "database-url"
+          CORS_ORIGINS  = "cors-origins"
+          COOKIE_DOMAIN = "cookie-domain"
+        }
+      }
+      "client" = {
+        allow_unauthenticated = true
+        memory_limit          = "1Gi"
+        health_check_path     = ""
+        container_port        = 4000
+        secret_env_vars = {
+          ISR_SECRET = "isr-secret"
+        }
+      }
+    }
+  }
+
+  "motora-dev" = {
+    github_org  = "motora-dev"
+    github_repo = "motora-dev"
+
+    # L2: Service-common secrets
+    service_secret_names = [
+      "database-url",
+      "supabase-url",
+      "supabase-service-role-key",
+    ]
+
+    # L3: Environment-specific secrets
+    env_secret_names = [
+      "cors-origins",
+      "domain",
+      "cookie-domain",
+    ]
+
+    common_env_vars = {
+      NODE_ENV = "production"
+    }
+
+    cloud_run_services = {
+      "server" = {
+        allow_unauthenticated = true
+        memory_limit          = "1Gi"
+        health_check_path     = "/api/health"
+        env_vars              = {}
+        secret_env_vars = {
+          DATABASE_URL              = "database-url"
+          SUPABASE_URL              = "supabase-url"
+          SUPABASE_SERVICE_ROLE_KEY = "supabase-service-role-key"
+          CORS_ORIGINS              = "cors-origins"
+          DOMAIN                    = "domain"
+          COOKIE_DOMAIN             = "cookie-domain"
+          ALLOWED_EMAILS            = "allowed-emails"
+        }
+      }
+      "client" = {
+        allow_unauthenticated = true
+        memory_limit          = "1Gi"
+        health_check_path     = ""
+        container_port        = 4000
+        env_vars = {
+          BASIC_AUTH_ENABLED = "false"
+        }
+        secret_env_vars = {
+          BASIC_AUTH_USER     = "basic-auth-user"
+          BASIC_AUTH_PASSWORD = "basic-auth-password"
+          ISR_SECRET          = "isr-secret"
+        }
+      }
+    }
+  }
+}
