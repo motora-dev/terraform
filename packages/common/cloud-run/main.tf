@@ -1,6 +1,6 @@
 # Cloud Run Service
 resource "google_cloud_run_v2_service" "main" {
-  name                = "${var.service_name}-${var.environment}"
+  name                = var.service_name
   location            = var.region
   project             = var.project_id
   deletion_protection = false

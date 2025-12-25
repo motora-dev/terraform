@@ -1,6 +1,5 @@
-project_id  = "your-prd-project-id"
-region      = "asia-northeast1"
-environment = "main"
+project_id = "your-prd-project-id"
+region     = "asia-northeast1"
 
 # Common environment variables for all services
 common_env_vars = {
@@ -9,11 +8,14 @@ common_env_vars = {
 
 # L1: Global secrets (shared by all environments and services)
 global_secret_names = [
-  "basic-auth-user",
-  "basic-auth-password",
-  "isr-secret",
-  "session-secret-token",
   "allowed-emails",
+  "basic-auth-password",
+  "basic-auth-user",
+  "google-client-id",
+  "google-client-secret",
+  "isr-secret",
+  "jwt-private-key",
+  "jwt-public-key",
 ]
 
 services = {
@@ -21,15 +23,13 @@ services = {
     github_org  = "motora-dev"
     github_repo = "angular-nestjs-realworld-example-app"
 
-    # L2: Service-common secrets (shared across environments, service-specific)
-    service_secret_names = [
-      "database-url",
-    ]
-
-    # L3: Environment-specific secrets (environment + service prefix)
-    env_secret_names = [
+    # L2: Service secrets (with service prefix)
+    secret_names = [
+      "client-url",
       "cors-origins",
-      "cookie-domain",
+      "csrf-secret",
+      "database-url",
+      "google-callback-url",
     ]
 
     common_env_vars = {
@@ -43,9 +43,15 @@ services = {
         health_check_path     = "/api/health"
         env_vars              = {}
         secret_env_vars = {
-          DATABASE_URL  = "database-url"
-          CORS_ORIGINS  = "cors-origins"
-          COOKIE_DOMAIN = "cookie-domain"
+          DATABASE_URL         = "database-url"
+          CLIENT_URL           = "client-url"
+          CORS_ORIGINS         = "cors-origins"
+          CSRF_SECRET          = "csrf-secret"
+          GOOGLE_CLIENT_ID     = "google-client-id"
+          GOOGLE_CLIENT_SECRET = "google-client-secret"
+          GOOGLE_CALLBACK_URL  = "google-callback-url"
+          JWT_PRIVATE_KEY      = "jwt-private-key"
+          JWT_PUBLIC_KEY       = "jwt-public-key"
         }
       }
       "client" = {
@@ -64,18 +70,14 @@ services = {
     github_org  = "motora-dev"
     github_repo = "motora-dev"
 
-    # L2: Service-common secrets
-    service_secret_names = [
-      "database-url",
-      "supabase-url",
-      "supabase-service-role-key",
-    ]
-
-    # L3: Environment-specific secrets
-    env_secret_names = [
-      "cors-origins",
-      "domain",
+    # L2: Service secrets (with service prefix)
+    secret_names = [
       "cookie-domain",
+      "cors-origins",
+      "database-url",
+      "domain",
+      "supabase-service-role-key",
+      "supabase-url",
     ]
 
     common_env_vars = {

@@ -1,15 +1,15 @@
 # Service Account for GitHub Actions
 resource "google_service_account" "github_actions" {
-  account_id   = "${var.service_name}-gh-${var.environment}"
-  display_name = "GitHub Actions SA - ${var.service_name} (${var.environment})"
+  account_id   = "${var.service_name}-gh"
+  display_name = "GitHub Actions SA - ${var.service_name}"
   description  = "Service account for GitHub Actions to deploy ${var.service_name} to Cloud Run"
   project      = var.project_id
 }
 
 # Service Account for Cloud Run
 resource "google_service_account" "cloud_run" {
-  account_id   = "${var.service_name}-${var.environment}"
-  display_name = "Cloud Run Service Account (${var.environment})"
+  account_id   = "${var.service_name}-cr"
+  display_name = "Cloud Run SA - ${var.service_name}"
   description  = "Service account for Cloud Run service"
   project      = var.project_id
 }
@@ -55,5 +55,3 @@ resource "google_project_iam_member" "cloud_run_roles" {
   role    = each.value
   member  = "serviceAccount:${google_service_account.cloud_run.email}"
 }
-
-

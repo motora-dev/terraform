@@ -1,18 +1,20 @@
-project_id  = "your-dev-project-id"
-region      = "asia-northeast1"
-environment = "develop"
+project_id = "your-dev-project-id"
+region     = "asia-northeast1"
 
 # Common environment variables for all services
 common_env_vars = {
   TZ = "Asia/Tokyo"
 }
 
-# Common secret names for all services
-common_secret_names = [
-  "basic-auth-user",
+# L1: Global secrets (shared by all environments and services)
+global_secret_names = [
   "basic-auth-password",
+  "basic-auth-user",
+  "google-client-id",
+  "google-client-secret",
   "isr-secret",
-  "session-secret-token",
+  "jwt-private-key",
+  "jwt-public-key",
 ]
 
 services = {
@@ -20,11 +22,14 @@ services = {
     github_org  = "motora-dev"
     github_repo = "angular-nestjs-realworld-example-app"
 
-    # Service-specific secrets only
+    # L2: Service secrets (with service prefix)
+    # Example: realworld-database-url
     secret_names = [
-      "database-url",
+      "client-url",
       "cors-origins",
-      "cookie-domain",
+      "csrf-secret",
+      "database-url",
+      "google-callback-url",
     ]
 
     # Common environment variables for this service (server/client)
@@ -38,11 +43,21 @@ services = {
         allow_unauthenticated = true
         memory_limit          = "512Mi"
         health_check_path     = "/api/health"
-        env_vars              = {}
+        env_vars = {
+          BASIC_AUTH_ENABLED = "true"
+        }
         secret_env_vars = {
-          DATABASE_URL        = "database-url"
-          CORS_ORIGINS        = "cors-origins"
-          COOKIE_DOMAIN       = "cookie-domain"
+          DATABASE_URL         = "database-url"
+          CLIENT_URL           = "client-url"
+          CORS_ORIGINS         = "cors-origins"
+          CSRF_SECRET          = "csrf-secret"
+          GOOGLE_CLIENT_ID     = "google-client-id"
+          GOOGLE_CLIENT_SECRET = "google-client-secret"
+          GOOGLE_CALLBACK_URL  = "google-callback-url"
+          JWT_PRIVATE_KEY      = "jwt-private-key"
+          JWT_PUBLIC_KEY       = "jwt-public-key"
+          BASIC_AUTH_USER      = "basic-auth-user"
+          BASIC_AUTH_PASSWORD  = "basic-auth-password"
         }
       }
       "client" = {
@@ -66,15 +81,14 @@ services = {
     github_org  = "motora-dev"
     github_repo = "motora-dev"
 
-    # Service-specific secrets only
+    # L2: Service secrets (with service prefix)
     secret_names = [
-      "database-url",
-      "supabase-url",
-      "supabase-service-role-key",
-      "cors-origins",
-      "domain",
       "cookie-domain",
-      "allowed-emails",
+      "cors-origins",
+      "database-url",
+      "domain",
+      "supabase-service-role-key",
+      "supabase-url",
     ]
 
     common_env_vars = {

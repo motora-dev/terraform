@@ -1,7 +1,7 @@
 # Workload Identity Pool
 resource "google_iam_workload_identity_pool" "github" {
-  workload_identity_pool_id = "${var.service_name}-pool-${var.environment}"
-  display_name              = "${var.service_name}-${var.environment}"
+  workload_identity_pool_id = "${var.service_name}-pool"
+  display_name              = var.service_name
   description               = "WIF Pool for GitHub Actions - ${var.service_name}"
   project                   = var.project_id
 }
@@ -9,8 +9,8 @@ resource "google_iam_workload_identity_pool" "github" {
 # Workload Identity Provider
 resource "google_iam_workload_identity_pool_provider" "github" {
   workload_identity_pool_id          = google_iam_workload_identity_pool.github.workload_identity_pool_id
-  workload_identity_pool_provider_id = "${var.service_name}-prov-${var.environment}"
-  display_name                       = "${var.service_name}-${var.environment}"
+  workload_identity_pool_provider_id = "${var.service_name}-prov"
+  display_name                       = var.service_name
   description                        = "WIF Provider for GitHub Actions - ${var.service_name}"
   project                            = var.project_id
 
@@ -39,4 +39,3 @@ resource "google_service_account_iam_member" "github_wi" {
 data "google_project" "current" {
   project_id = var.project_id
 }
-

@@ -18,7 +18,6 @@ terraform/
 │   └── common/                # 共通Terraformモジュール
 │       ├── iam/               # サービスアカウント & IAM
 │       ├── wif/               # Workload Identity Federation
-│       ├── secrets/           # Secret Manager
 │       └── cloud-run/         # Cloud Run
 └── apps/                      # アプリケーションドキュメント
     ├── angular-nestjs-realworld-example-app/
@@ -97,7 +96,8 @@ cp environments/develop.tfvars.example environments/develop.tfvars
 
 ## 🏢 管理対象サービス
 
-すべてのサービスは単一の tfstate で管理され、リソースの競合を回避します：
+すべてのサービスは単一の tfstate で管理され、リソースの競合を回避します。
+また、**1 環境=1 GCP プロジェクト** という方針で運用されており、`environments/` 以下の tfvars ファイルでプロジェクト ID (`project_id`) を切り替えることで環境分離を実現しています。
 
 ```hcl
 services = {
@@ -114,27 +114,27 @@ services = {
 }
 ```
 
-## 🔐 シークレットの 3 段階管理
+## 🔐 シークレットの 2 段階管理
 
-シークレットは 3 段階で管理されています：
+シークレットは 2 段階で管理されています。環境分離がプロジェクト単位で行われているため、環境固有のプレフィックス（L3）は廃止されました。
 
-| レベル               | 命名規則                 | 例                               | 用途                     |
-| -------------------- | ------------------------ | -------------------------------- | ------------------------ |
-| **L1: グローバル**   | `{name}`                 | `basic-auth-user`                | 全環境・全サービス共通   |
-| **L2: サービス共通** | `{service}-{name}`       | `realworld-database-url`         | 全環境共通・サービス個別 |
-| **L3: 環境個別**     | `{env}-{service}-{name}` | `develop-realworld-cors-origins` | 環境・サービス個別       |
+| レベル               | 命名規則           | 例                       | 用途                                                     |
+| -------------------- | ------------------ | ------------------------ | -------------------------------------------------------- |
+| **L1: グローバル**   | `{name}`           | `basic-auth-user`        | 全サービス共通。<br>環境固有の値であっても名前は共通化。 |
+| **L2: サービス共通** | `{service}-{name}` | `realworld-database-url` | サービス固有。<br>他サービスとの名前衝突を避けるため。   |
 
 ### シークレット値の設定
 
+環境（GCP プロジェクト）ごとに、以下のコマンドで値を設定します。
+
 ```bash
-# L1: グローバルシークレット
+# L1: グローバルシークレット（例: Basic認証ユーザー）
+# global_secret_names に定義されているもの
 echo -n "YOUR_VALUE" | gcloud secrets versions add basic-auth-user --data-file=-
 
-# L2: サービス共通シークレット
+# L2: サービス固有シークレット（例: DB接続URL）
+# secret_names に定義されているもの（Terraformが自動的にサービス名をプレフィックスとして付与）
 echo -n "YOUR_VALUE" | gcloud secrets versions add realworld-database-url --data-file=-
-
-# L3: 環境個別シークレット
-echo -n "YOUR_VALUE" | gcloud secrets versions add develop-realworld-cors-origins --data-file=-
 ```
 
 ## 📦 モジュール
@@ -150,9 +150,9 @@ echo -n "YOUR_VALUE" | gcloud secrets versions add develop-realworld-cors-origin
 
 GitHub Actions からの安全な認証のための Workload Identity Federation を設定します。
 
-### Secrets (`packages/common/secrets`)
+### Secrets
 
-Google Secret Manager でシークレットを管理します（環境・サービスプレフィックス付き）。
+Google Secret Manager でシークレットを管理します。`main.tf` 内で L1 (グローバル) と L2 (サービス固有) のリソースを一括定義しています。
 
 ### Cloud Run (`packages/common/cloud-run`)
 

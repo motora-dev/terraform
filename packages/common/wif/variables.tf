@@ -3,11 +3,6 @@ variable "project_id" {
   type        = string
 }
 
-variable "environment" {
-  description = "Environment name"
-  type        = string
-}
-
 variable "service_name" {
   description = "Service name for resource naming"
   type        = string
@@ -27,4 +22,3 @@ variable "github_service_account_id" {
   description = "Service account ID for GitHub Actions"
   type        = string
 }
-
