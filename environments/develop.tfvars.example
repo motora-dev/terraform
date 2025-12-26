@@ -44,7 +44,7 @@ services = {
       "server" = {
         allow_unauthenticated = true
         memory_limit          = "512Mi"
-        health_check_path     = "/api/health"
+        health_check_path     = ""
         env_vars = {
           BASIC_AUTH_ENABLED = "true"
         }
@@ -99,7 +99,7 @@ services = {
       "server" = {
         allow_unauthenticated = true
         memory_limit          = "512Mi"
-        health_check_path     = "/api/health"
+        health_check_path     = ""
         env_vars              = {}
         secret_env_vars = {
           DATABASE_URL              = "database-url"
