@@ -1,5 +1,7 @@
-# Service Account for GitHub Actions
+# Service Account for GitHub Actions (optional, for backward compatibility)
 resource "google_service_account" "github_actions" {
+  count = var.create_github_actions_sa ? 1 : 0
+
   account_id   = "${var.service_name}-gh"
   display_name = "GitHub Actions SA - ${var.service_name}"
   description  = "Service account for GitHub Actions to deploy ${var.service_name} to Cloud Run"
@@ -14,7 +16,7 @@ resource "google_service_account" "cloud_run" {
   project      = var.project_id
 }
 
-# IAM roles for GitHub Actions service account
+# IAM roles for GitHub Actions service account (only if created)
 locals {
   github_actions_roles = [
     "roles/run.admin",                 # Cloud Run admin
@@ -26,18 +28,20 @@ locals {
 }
 
 resource "google_project_iam_member" "github_actions_roles" {
-  for_each = toset(local.github_actions_roles)
+  for_each = var.create_github_actions_sa ? toset(local.github_actions_roles) : toset([])
 
   project = var.project_id
   role    = each.value
-  member  = "serviceAccount:${google_service_account.github_actions.email}"
+  member  = "serviceAccount:${google_service_account.github_actions[0].email}"
 }
 
-# Allow GitHub Actions to act as Cloud Run service account
+# Allow GitHub Actions to act as Cloud Run service account (only if GitHub Actions SA is created)
 resource "google_service_account_iam_member" "github_actions_act_as_cloud_run" {
+  count = var.create_github_actions_sa ? 1 : 0
+
   service_account_id = google_service_account.cloud_run.name
   role               = "roles/iam.serviceAccountUser"
-  member             = "serviceAccount:${google_service_account.github_actions.email}"
+  member             = "serviceAccount:${google_service_account.github_actions[0].email}"
 }
 
 # IAM roles for Cloud Run service account (minimal permissions)

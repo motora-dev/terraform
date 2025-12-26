@@ -3,21 +3,19 @@ output "services" {
   description = "Service configurations"
   value = {
     for service_name, _ in var.services : service_name => {
-      github_actions_service_account = module.iam[service_name].github_actions_service_account_email
+      github_actions_service_account = google_service_account.github_actions.email
       cloud_run_service_account      = module.iam[service_name].cloud_run_service_account_email
-      workload_identity_provider     = module.wif[service_name].provider_name
+      workload_identity_provider     = module.wif.provider_name
     }
   }
 }
 
-# GitHub Secrets setup for each service
+# GitHub Secrets setup (same for all services)
 output "github_secrets_setup" {
-  description = "Values for GitHub Secrets per service"
+  description = "Values for GitHub Secrets (shared across all services)"
   value = {
-    for service_name, _ in var.services : service_name => {
-      WIF_PROVIDER        = module.wif[service_name].provider_name
-      WIF_SERVICE_ACCOUNT = module.iam[service_name].github_actions_service_account_email
-    }
+    WIF_PROVIDER        = module.wif.provider_name
+    WIF_SERVICE_ACCOUNT = google_service_account.github_actions.email
   }
 }
 

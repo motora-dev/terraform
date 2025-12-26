@@ -15,6 +15,8 @@ global_secret_names = [
   "isr-secret",
   "jwt-private-key",
   "jwt-public-key",
+  "supabase-service-role-key",
+  "supabase-url",
 ]
 
 services = {
@@ -84,8 +86,6 @@ services = {
       "cors-origins",
       "database-url",
       "domain",
-      "supabase-service-role-key",
-      "supabase-url",
     ]
 
     common_env_vars = {

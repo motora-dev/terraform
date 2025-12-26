@@ -3,22 +3,23 @@ variable "project_id" {
   type        = string
 }
 
-variable "service_name" {
-  description = "Service name for resource naming"
-  type        = string
-}
-
 variable "github_org" {
   description = "GitHub organization name"
   type        = string
 }
 
-variable "github_repo" {
-  description = "GitHub repository name"
+variable "github_repositories" {
+  description = "List of GitHub repositories in format 'org/repo'"
+  type        = list(string)
+}
+
+variable "github_service_account_email" {
+  description = "Service account email for GitHub Actions"
   type        = string
 }
 
-variable "github_service_account_id" {
-  description = "Service account ID for GitHub Actions"
-  type        = string
+variable "cloud_run_service_account_emails" {
+  description = "List of Cloud Run service account emails that GitHub Actions can act as"
+  type        = list(string)
+  default     = []
 }

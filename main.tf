@@ -27,29 +27,73 @@ resource "google_project_service" "apis" {
   disable_on_destroy = false
 }
 
-# IAM module for each service
+# IAM module for each service (Cloud Run Service Account only)
 module "iam" {
   for_each = var.services
   source   = "./packages/common/iam"
 
-  project_id   = var.project_id
-  service_name = each.key
+  project_id             = var.project_id
+  service_name           = each.key
+  create_github_actions_sa = false
 
   depends_on = [google_project_service.apis]
 }
 
-# Workload Identity Federation module for each service
+# Collect all GitHub repositories and Cloud Run service accounts
+locals {
+  github_repositories = [
+    for service_name, service in var.services : "${service.github_org}/${service.github_repo}"
+  ]
+  cloud_run_service_account_emails = [
+    for service_name, _ in var.services : module.iam[service_name].cloud_run_service_account_email
+  ]
+  github_org = var.services[keys(var.services)[0]].github_org
+}
+
+# Project-level GitHub Actions Service Account
+resource "google_service_account" "github_actions" {
+  account_id   = "github-actions"
+  display_name = "GitHub Actions"
+  description  = "Service account for GitHub Actions to deploy services to Cloud Run"
+  project      = var.project_id
+}
+
+# IAM roles for GitHub Actions service account
+locals {
+  github_actions_roles = [
+    "roles/run.admin",                 # Cloud Run admin
+    "roles/storage.admin",             # Container Registry access
+    "roles/cloudbuild.builds.builder", # Cloud Build
+    "roles/iam.serviceAccountUser",    # Act as service account
+    "roles/viewer",                    # Project Viewer
+  ]
+}
+
+resource "google_project_iam_member" "github_actions_roles" {
+  for_each = toset(local.github_actions_roles)
+
+  project = var.project_id
+  role    = each.value
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+
+  depends_on = [google_service_account.github_actions]
+}
+
+# Workload Identity Federation module (project-level, single instance)
 module "wif" {
-  for_each = var.services
-  source   = "./packages/common/wif"
+  source = "./packages/common/wif"
 
-  project_id                = var.project_id
-  service_name              = each.key
-  github_org                = each.value.github_org
-  github_repo               = each.value.github_repo
-  github_service_account_id = module.iam[each.key].github_actions_service_account_email
+  project_id                     = var.project_id
+  github_org                     = local.github_org
+  github_repositories            = local.github_repositories
+  github_service_account_email   = google_service_account.github_actions.email
+  cloud_run_service_account_emails = local.cloud_run_service_account_emails
 
-  depends_on = [module.iam]
+  depends_on = [
+    module.iam,
+    google_service_account.github_actions,
+    google_project_iam_member.github_actions_roles,
+  ]
 }
 
 # =============================================================================
@@ -224,10 +268,10 @@ module "app_realworld" {
   project_id                           = var.project_id
   region                               = var.region
   service_name                         = "realworld"
-  github_actions_service_account_email = module.iam["realworld"].github_actions_service_account_email
+  github_actions_service_account_email = google_service_account.github_actions.email
   cloud_run_service_account_email      = module.iam["realworld"].cloud_run_service_account_email
 
-  depends_on = [module.iam, module.wif]
+  depends_on = [module.iam, module.wif, google_service_account.github_actions]
 }
 
 # motora-dev specific resources
@@ -237,8 +281,8 @@ module "app_motora" {
   project_id                           = var.project_id
   region                               = var.region
   service_name                         = "motora-dev"
-  github_actions_service_account_email = module.iam["motora-dev"].github_actions_service_account_email
+  github_actions_service_account_email = google_service_account.github_actions.email
   cloud_run_service_account_email      = module.iam["motora-dev"].cloud_run_service_account_email
 
-  depends_on = [module.iam, module.wif]
+  depends_on = [module.iam, module.wif, google_service_account.github_actions]
 }
